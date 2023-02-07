@@ -1,0 +1,86 @@
+<html>
+  <head>
+  </head>
+  <body style="margin: 0;">
+    <canvas id="glslCanvas" data-fragment-url="shader.frag" width="100%" height="100%"></canvas>
+    <script src="src/ws_status.js"></script>
+    <script src="node_modules/glslCanvas/dist/GlslCanvas.js"></script>
+
+    <script type="text/javascript">
+        var canvas = document.getElementById("glslCanvas");
+        var sandbox = new GlslCanvas(canvas);
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+
+        function LoadShader(data)
+        {
+            console.log(data);
+            sandbox.load(String(data));
+        }
+
+        function AddUniforms(data)
+        {
+            switch (data.type)
+            {
+                case "float":
+                    sandbox.setUniform(data.name, data.value);
+                    break;
+                case "boolean":
+                    sandbox.setUniform(data.name, data.value);
+                    break;
+                case "vec2":
+                    sandbox.setUniform(data.name, data.value[0], data.value[1]);
+                    break;
+                case "vec3":
+                    sandbox.setUniform(data.name, data.value[0], data.value[1], data.value[2]);
+                    break;
+                case "texture":
+                    sandbox.setUniform(data.name, data.value);
+                    break;
+                default:
+                    break;
+            }
+        }
+    </script>
+
+    <script type="text/javascript">
+        const socket = new WebSocket(`ws://${window.location.hostname}:8080/canvas`);
+        const ws_status = new WsStatus(socket);  
+
+        socket.onmessage = function(msg) {
+          req = JSON.parse(msg.data);
+          if (req != null)
+          {
+            if (req.type == "shader")
+            {
+              //  LoadShader(Buffer.from(req.data, 'base64').toString('utf8'));
+                  LoadShader(atob(req.data));
+            } 
+            else if (req.type == "uniform")
+            {
+                AddUniforms(req.data);
+            }
+          }
+        };
+    </script>
+
+    <script type="text/javascript">
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Enter")
+                toggleFullScreen();
+        }, false);
+
+        document.addEventListener("mousedown", (e) => {
+                toggleFullScreen();
+        }, false);
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    </script>
+    </body>
+</html>

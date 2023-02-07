@@ -1,0 +1,129 @@
+<html>
+  <head>
+    <style>
+      #controller_grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-gap: 10px;
+        grid-auto-rows: minmax(100px, auto);
+      }
+      .c {
+        background-color: grey;
+      }
+      .col-1 {
+        grid-column: span 1;
+      }
+      .col-2 {
+        grid-column: span 2;
+      }
+      .col-3 {
+        grid-column: span 2;
+      }
+      .col-4 {
+        grid-column: span 4;
+      }
+      .row-1 {
+        grid-row: span 1;
+      }
+      .row-2 {
+        grid-row: span 2;
+      }
+      .row-3 {
+        grid-row: span 3;
+      }
+      .row-4 {
+        grid-row: span 4;
+      }
+
+    </style>
+      <script type="text/javascript">
+      const _controler = [];
+
+      const socket = new WebSocket(`ws://${window.location.hostname}:8080/control`);
+      window.onload = function() {
+        const ws_status = new WsStatus(socket);
+      }
+
+      
+      socket.addEventListener('open', (event) => {
+        document.querySelector('#send_offset').disabled = false;
+        document.querySelector('#send_rotate').disabled = false;
+
+        document.querySelector('#send_offset').addEventListener('click', function() {
+        t = 
+        {
+          type: "uniform",
+          data: {
+            type: "vec2",
+            name: "u_offset",
+            value: [parseFloat(document.querySelector('#offsetX').value), parseFloat(document.querySelector('#offsetY').value)]
+          }
+        }
+          socket.send(JSON.stringify(t));
+        });
+
+       document.querySelector('#send_rotate').addEventListener('click', function() {
+        t = 
+        {
+          type: "uniform",
+          data: {
+            type: "float",
+            name: "u_rotate",
+            value: parseFloat(document.querySelector('#rotate').value)
+          }
+        }
+          socket.send(JSON.stringify(t));
+        });
+      
+      });
+      
+      socket.onmessage = function(msg) {
+        req = JSON.parse(msg.data);
+        console.log(req);
+
+        if (req.status == 'new')
+        {
+          var c = controlerList.find(element => element.name == req.data.name);
+          _controler.push(new c(req.data.settings));
+        }
+        else if (req.status == 'update')
+        {
+          _controler.forEach(c => {
+            if (c._defaultSettings.id == req.data.settings.id)
+            {
+              c.setup(req.data.settings);
+            }
+          })
+        }
+      };
+    </script>
+  </head>
+  <body>
+    <h1>Control</h1>
+    <div id="controller_grid">
+      <div class="col-3 row-1 c" hidden="false">
+        <input id="offsetX" placeholder="0" type="number">
+        <input id="offsetY" placeholder="0" type="number">
+        <button id="send_offset" disabled="true">Send Offset</button>
+      </div>
+      <div class="col-1 row-1 c" hidden="false">
+        <input id="rotate" placeholder="0" type="number">
+        <button id="send_rotate" disabled="true">Send Rotation</button>
+      </div>
+    </div>
+    <div id="messages">
+    </div>
+    <div id="controler_slider" hidden="false">
+      <input type="range" id="control">
+      <div id="txt"></div>
+    </div>
+    <div id="controler_gyroscope" hidden="false">
+      <p id="label"></p>
+    </div>
+    <div id="controler_ambiantLight" hidden="false">
+      <p id="label"></p>
+    </div>
+    <script src="src/ws_status.js"></script>
+    <script src="src/controller.js"></script>
+  </body>
+</html>

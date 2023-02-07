@@ -1,0 +1,19 @@
+{
+  "name": "live-ccc",
+  "version": "0.0.1",
+  "description": "Web-based shader environment for live coding",
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "codemirror": "^6.0.1",
+    "express": "^4.18.2",
+    "glslCanvas": "^0.2.6",
+    "jsoneditor": "^9.9.2",
+    "ws": "^8.12.0"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,146 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/lib/codemirror.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.57.0/lib/codemirror.min.js"></script>
+    <link href="/node_modules/jsoneditor/dist/jsoneditor.min.css" rel="stylesheet" type="text/css">
+    <script src="/node_modules/jsoneditor/dist/jsoneditor.min.js"></script>
+    <script src="/ccc-editor.js"></script>
+    <script src="/src/controller.js"></script>
+    <style>
+      .CodeMirror {background-color: rgba(0, 0, 0, .5); height: 100%;}
+      #sidePanel {
+        position: absolute;
+        width: 300px;
+        height: 100%;
+        background-color: lightgray;
+        transition: right 0.5s ease-in-out;
+        z-index: 100;
+      }
+
+      .hidden {
+        right: -300px;
+      }
+
+      .visible {
+        right: 0;
+      }
+      body {
+    overflow-x: hidden;
+}
+
+      .jsoneditor-menu, .jsoneditor-button
+      {
+        display: none;
+      }
+    </style>
+    <script>
+      function UpdateBG(value)
+      {
+        document.querySelector(".CodeMirror").style['backgroundColor'] = `rgba(0,0,0,${value})`;
+      }
+    </script>
+  </head>
+  <body>
+      <div id="header" style="position: relative;">
+        <input type="range" id="color_range" min="0" max="1" value=".5" step=".10" onchange="UpdateBG(this.value)">
+        <button id="toggleButton"><-</button>
+      </div>
+      <div id="sidePanel" class="hidden">
+        <div id="jsoneditor" style="width: 300;"></div>
+        <div id="new_controler">
+          <select name="controlers_list" id="controlers_list">
+          </select>
+          <button id="addControler">+</button>
+          <button id="SendControler">Send</button>
+        </div>
+      </div>
+      <div id="renderingArea">
+        <div id="editor" style="position: absolute; left: 0px; z-index: 1; width: 100%; height: 100%"></div>
+        <div id="display" style="position: absolute; left: 0px; z-index: 0; width: 100%; height: 100%">
+          <canvas id="glslCanvas" data-fragment-url="/shader.frag"></canvas>
+        </div>
+        <div id="error_message" style="position: fixed; bottom: 0; width: 100%; display: inherit;">  
+      </div>
+    </div>
+  </body>
+  <script src="/src/ws_status.js"></script>
+    <script src="/node_modules/glslCanvas/dist/GlslCanvas.js"></script>
+    <script type="text/javascript">
+      var canvas = document.getElementById("glslCanvas");
+      var sandbox = new GlslCanvas(canvas);
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+    </script>
+    <script >
+      const editorCCC = new CCCEditor();
+    </script>
+
+    <script>
+      //side panel manager
+      const toggleButton = document.getElementById('toggleButton');
+      const sidePanel = document.getElementById('sidePanel');
+
+      toggleButton.addEventListener('click', () => {
+        if (sidePanel.classList.contains('hidden')) {
+          sidePanel.classList.remove('hidden');
+          sidePanel.classList.add('visible');
+          toggleButton.innerText = "->";
+        } else {
+          sidePanel.classList.remove('visible');
+          sidePanel.classList.add('hidden');
+          toggleButton.innerText = "<-";
+        }
+      });
+    </script>
+
+    <script>
+      controler = [];
+      const select = document.querySelector("#controlers_list");
+      const bntAddControler = document.querySelector("#addControler");
+      const bntUpdate = document.querySelector("#SendControler");
+
+      bntUpdate.addEventListener('click', () => {
+        controler = JSONeditor.get()
+        controler.forEach(element => {
+          editorCCC.socket.send(
+          JSON.stringify({
+           type: 'controler',
+           data: {settings: element},
+           status: 'update'
+          })
+          );
+        });
+      });
+
+      bntAddControler.addEventListener('click', () => {
+        tmp = new controlerList[select.selectedIndex];
+        controler.push(tmp.getDefaultSettings());
+        JSONeditor.set(controler);
+        editorCCC.socket.send(
+          JSON.stringify({
+           type: 'controler',
+           data: {name: controlerList[select.selectedIndex].name, settings: tmp.getDefaultSettings()},
+           status: 'new'
+          })
+        );
+      });
+
+      controlerList.forEach(element => {
+        const option = document.createElement("option");
+        option.value = String(element.name)
+        option.textContent = String(element.name);
+        select.appendChild(option);
+      });
+
+      const container = document.getElementById("jsoneditor")
+        const JSONeditor = new JSONEditor(container, 
+        {
+          modes: ['tree'],
+          disable_array_add: true,
+          disable_array_delete: true,
+          disable_array_reorder: true,
+        });
+
+        // get json
+    </script>
+</html>
